@@ -6,12 +6,10 @@
     <title>Прогноз матча</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div class="ball"></div>
     <div class="container">
         <h1>Прогноз матча</h1>
         <form id="prediction-form">
@@ -25,26 +23,13 @@
             </div>
             <div class="input-group">
                 <label for="league"><i class="fas fa-trophy icon"></i> Лига/Турнир:</label>
-                <select id="league" required>
-                    <option value="">Выберите лигу</option>
-                    <option value="39">Premier League</option>
-                    <option value="140">La Liga</option>
-                    <option value="78">Bundesliga</option>
-                    <option value="135">Serie A</option>
-                    <option value="2">Champions League</option>
-                </select>
+                <input type="text" id="league" placeholder="Введите название лиги" required>
             </div>
-            <p class="hint"><i class="fas fa-exclamation-circle icon"></i> Вводите названия команд и лиг на английском языке (например, "Manchester United", "Premier League").</p>
             <button type="submit"><i class="fas fa-futbol icon"></i> Получить прогноз</button>
         </form>
-        <div id="result" class="result-container">
-            <button id="copy-button" class="copy-button"><i class="fas fa-copy icon"></i> Скопировать прогноз</button>
-            <div id="prediction-text"></div>
-        </div>
+        <div id="result" class="result-container"></div>
     </div>
-    <footer>
-        <p>2025 By MeF</p>
-    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
