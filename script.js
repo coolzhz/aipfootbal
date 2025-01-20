@@ -1,110 +1,101 @@
-/* Переменные */
-:root {
-    --bgWidth: 10000px;
-}
+const API_KEY = process.env.API_KEY; // API-ключ из переменных окружения
+const API_HOST = 'api-football-v1.p.rapidapi.com';
 
-/* Основные стили */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Roboto', sans-serif;
-    background: linear-gradient(to right, #1e5799 0%, #2ce0bf 19%, #76dd2c 40%, #dba62b 60%, #e02cbf 83%, #1e5799 100%);
-    background-size: var(--bgWidth) 100%;
-    animation: bg 15s linear infinite;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
+// Функция для получения списка команд
+async function getTeams() {
+    const url = 'https://api-football-v1.p.rapidapi.com/v3/teams?league=39&season=2023'; // Пример для Premier League
+    const options = {
+        method: 'GET',
+        headers: {
+            'x-rapidapi-host': API_HOST,
+            'x-rapidapi-key': API_KEY
+        }
+    };
 
-/* Анимация фона */
-@keyframes bg {
-    0% {
-        background-position-x: 0;
-    }
-    100% {
-        background-position-x: var(--bgWidth);
+    try {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        return data.response.map(team => team.team.name);
+    } catch (error) {
+        console.error('Ошибка при загрузке команд:', error);
+        return [];
     }
 }
 
-/* Контейнер */
-.container {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    max-width: 500px;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-}
+// Инициализация автодополнения
+document.addEventListener('DOMContentLoaded', async () => {
+    const teams = await getTeams();
 
-/* Заголовок */
-h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    color: #333;
-}
+    new Awesomplete(document.getElementById('team1'), { list: teams, minChars: 1 });
+    new Awesomplete(document.getElementById('team2'), { list: teams, minChars: 1 });
+});
 
-/* Группы ввода */
-.input-group {
-    margin-bottom: 1.5rem;
-    text-align: left;
-}
+// Обработка формы
+document.getElementById('prediction-form').addEventListener('submit', function(event) {
+    event.preventDefault();
 
-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #555;
-}
+    const team1 = document.getElementById('team1').value.trim();
+    const team2 = document.getElementById('team2').value.trim();
 
-input, select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1rem;
-    margin-top: 0.5rem;
-}
-
-/* Кнопка */
-button {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Результат */
-.result-container {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    color: #333;
-    text-align: left;
-}
-
-.result-container p {
-    margin: 0.75rem 0;
-    display: flex;
-    align-items: center;
-}
-
-.icon {
-    margin-right: 0.5rem;
-    font-size: 1.2rem;
+    if (!team1 || !team2) {
+        alert('Пожалуйста, заполните все поля.');
+        return;
     }
+
+    const result = predictMatch(team1, team2);
+    displayPrediction(result);
+});
+
+// Функция для прогнозирования матча
+function predictMatch(team1, team2) {
+    const team1Goals = Math.floor(Math.random() * 4);
+    const team2Goals = Math.floor(Math.random() * 4);
+    const winner = team1Goals > team2Goals ? team1 : team2;
+    const total = team1Goals + team2Goals > 2.5 ? "Больше 2.5" : "Меньше 2.5";
+    const team1Total = getIndividualTotal(team1Goals);
+    const team2Total = getIndividualTotal(team2Goals);
+    const exactScore = `${team1Goals} : ${team2Goals}`;
+    const comment = getRandomComment(team1Goals, team2Goals);
+
+    return {
+        team1: team1,
+        team2: team2,
+        winner: winner,
+        total: total,
+        team1Total: team1Total,
+        team2Total: team2Total,
+        exactScore: exactScore,
+        comment: comment
+    };
+}
+
+// Функция для получения индивидуального тотала
+function getIndividualTotal(goals) {
+    return goals > 0 ? "Больше 0.5" : "Меньше 0.5";
+}
+
+// Функция для генерации случайного комментария
+function getRandomComment(team1Goals, team2Goals) {
+    const comments = [
+        `Ожидается напряженный матч! ${team1Goals} голов для первой команды и ${team2Goals} для второй.`,
+        `Команды в отличной форме, будет интересно! ${team1Goals} и ${team2Goals} голов соответственно.`,
+        `Судя по статистике, это будет равный поединок. ${team1Goals} и ${team2Goals} голов.`,
+        `Одна из команд явный фаворит, но в футболе всё может случиться! ${team1Goals} и ${team2Goals} голов.`,
+        `Матч обещает быть зрелищным с большим количеством голов. ${team1Goals} и ${team2Goals} голов.`
+    ];
+    return comments[Math.floor(Math.random() * comments.length)];
+}
+
+// Функция для отображения прогноза
+function displayPrediction(result) {
+    const resultContainer = document.getElementById('result');
+    resultContainer.innerHTML = `
+        <h3>Прогноз:</h3>
+        <p><i class="fas fa-futbol icon"></i> Победитель: ${result.winner}</p>
+        <p><i class="fas fa-chart-line icon"></i> Общий тотал голов: ${result.total}</p>
+        <p><i class="fas fa-running icon"></i> Индивидуальный тотал ${result.team1}: ${result.team1Total}</p>
+        <p><i class="fas fa-running icon"></i> Индивидуальный тотал ${result.team2}: ${result.team2Total}</p>
+        <p><i class="fas fa-stopwatch icon"></i> Точный счёт: ${result.exactScore}</p>
+        <p><i class="fas fa-comment icon"></i> Комментарий: ${result.comment}</p>
+    `;
+}
