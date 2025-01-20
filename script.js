@@ -1,97 +1,110 @@
-const API_KEY = process.env.API_KEY; // API-ключ из переменных окружения
-const API_HOST = 'api-football-v1.p.rapidapi.com';
+/* Переменные */
+:root {
+    --bgWidth: 10000px;
+}
 
-// Функция для получения списка команд
-async function getTeams() {
-    const url = 'https://api-football-v1.p.rapidapi.com/v3/teams?league=39&season=2023'; // Пример для Premier League
-    const options = {
-        method: 'GET',
-        headers: {
-            'x-rapidapi-host': API_HOST,
-            'x-rapidapi-key': API_KEY
-        }
-    };
+/* Основные стили */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to right, #1e5799 0%, #2ce0bf 19%, #76dd2c 40%, #dba62b 60%, #e02cbf 83%, #1e5799 100%);
+    background-size: var(--bgWidth) 100%;
+    animation: bg 15s linear infinite;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
 
-    try {
-        const response = await fetch(url, options);
-        const data = await response.json();
-        return data.response.map(team => team.team.name);
-    } catch (error) {
-        console.error('Ошибка при загрузке команд:', error);
-        return [];
+/* Анимация фона */
+@keyframes bg {
+    0% {
+        background-position-x: 0;
+    }
+    100% {
+        background-position-x: var(--bgWidth);
     }
 }
 
-// Функция для получения списка лиг
-async function getLeagues() {
-    const url = 'https://api-football-v1.p.rapidapi.com/v3/leagues';
-    const options = {
-        method: 'GET',
-        headers: {
-            'x-rapidapi-host': API_HOST,
-            'x-rapidapi-key': API_KEY
-        }
-    };
-
-    try {
-        const response = await fetch(url, options);
-        const data = await response.json();
-        return data.response.map(league => league.league.name);
-    } catch (error) {
-        console.error('Ошибка при загрузке лиг:', error);
-        return [];
-    }
+/* Контейнер */
+.container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
-// Инициализация автодополнения
-document.addEventListener('DOMContentLoaded', async () => {
-    const teams = await getTeams();
-    const leagues = await getLeagues();
-
-    new Awesomplete(document.getElementById('team1'), { list: teams, minChars: 1 });
-    new Awesomplete(document.getElementById('team2'), { list: teams, minChars: 1 });
-    new Awesomplete(document.getElementById('league'), { list: leagues, minChars: 1 });
-});
-
-// Функция для сохранения прогноза
-function savePrediction(team1, team2, league, result) {
-    const predictions = JSON.parse(localStorage.getItem('predictions')) || [];
-    const key = `${team1}-${team2}-${league}`;
-    predictions.push({ key, ...result });
-    localStorage.setItem('predictions', JSON.stringify(predictions));
+/* Заголовок */
+h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #333;
 }
 
-// Функция для получения сохранённого прогноза
-function getSavedPrediction(team1, team2, league) {
-    const predictions = JSON.parse(localStorage.getItem('predictions')) || [];
-    const key = `${team1}-${team2}-${league}`;
-    return predictions.find(p => p.key === key);
+/* Группы ввода */
+.input-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
 }
 
-// Обработка формы
-document.getElementById('prediction-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
 
-    const team1 = document.getElementById('team1').value.trim();
-    const team2 = document.getElementById('team2').value.trim();
-    const league = document.getElementById('league').value.trim();
+input, select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
 
-    if (!team1 || !team2 || !league) {
-        alert('Пожалуйста, заполните все поля.');
-        return;
+/* Кнопка */
+button {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Результат */
+.result-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    color: #333;
+    text-align: left;
+}
+
+.result-container p {
+    margin: 0.75rem 0;
+    display: flex;
+    align-items: center;
+}
+
+.icon {
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
     }
-
-    // Проверяем, есть ли сохранённый прогноз
-    const savedPrediction = getSavedPrediction(team1, team2, league);
-    if (savedPrediction) {
-        alert('Прогноз уже есть! Получите его прямо сейчас, нажав на кнопку "Получить прогноз".');
-        return;
-    }
-
-    // Если прогноза нет, создаём новый
-    const result = await predictMatch(team1, team2, league);
-    savePrediction(team1, team2, league, result);
-    displayPrediction(result);
-});
-
-// Остальной код для прогнозирования и отображения результатов...
