@@ -15,6 +15,7 @@ async function getTeams() {
     try {
         const response = await fetch(url, options);
         const data = await response.json();
+        console.log(data); // Проверяем, что данные загружаются
         return data.response.map(team => team.team.name);
     } catch (error) {
         console.error('Ошибка при загрузке команд:', error);
@@ -25,6 +26,7 @@ async function getTeams() {
 // Инициализация автодополнения
 document.addEventListener('DOMContentLoaded', async () => {
     const teams = await getTeams();
+    console.log(teams); // Проверяем, что список команд получен
 
     new Awesomplete(document.getElementById('team1'), { list: teams, minChars: 1 });
     new Awesomplete(document.getElementById('team2'), { list: teams, minChars: 1 });
@@ -42,7 +44,12 @@ document.getElementById('prediction-form').addEventListener('submit', function(e
         return;
     }
 
+    console.log("Команда 1:", team1); // Проверяем, что значения введены
+    console.log("Команда 2:", team2);
+
     const result = predictMatch(team1, team2);
+    console.log("Прогноз:", result); // Проверяем, что прогноз создан
+
     displayPrediction(result);
 });
 
@@ -89,6 +96,11 @@ function getRandomComment(team1Goals, team2Goals) {
 // Функция для отображения прогноза
 function displayPrediction(result) {
     const resultContainer = document.getElementById('result');
+    if (!resultContainer) {
+        console.error("Элемент 'result' не найден!");
+        return;
+    }
+
     resultContainer.innerHTML = `
         <h3>Прогноз:</h3>
         <p><i class="fas fa-futbol icon"></i> Победитель: ${result.winner}</p>
@@ -98,4 +110,6 @@ function displayPrediction(result) {
         <p><i class="fas fa-stopwatch icon"></i> Точный счёт: ${result.exactScore}</p>
         <p><i class="fas fa-comment icon"></i> Комментарий: ${result.comment}</p>
     `;
+
+    console.log("Прогноз отображён:", result); // Проверяем, что прогноз отображается
 }
