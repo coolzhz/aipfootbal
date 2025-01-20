@@ -1,0 +1,20 @@
+# Включаем модуль mod_rewrite для работы с ЧПУ (человеко-понятные URL)
+RewriteEngine On
+
+# Убираем расширение .html из URL
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Перенаправляем с URL с .html на URL без .html
+RewriteCond %{THE_REQUEST} \s/([^.]+)\.html [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# Блокируем доступ к .htaccess файлу
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Устанавливаем индексные файлы
+DirectoryIndex index.html
