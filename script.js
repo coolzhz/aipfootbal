@@ -14,9 +14,9 @@ async function loadModel() {
 }
 loadModel();
 
-// Функция для получения списка команд
-async function getTeams() {
-    const url = 'https://api.football-data.org/v4/competitions/PL/teams'; // Пример для Premier League
+// Функция для поиска команды по названию
+async function searchTeamByName(teamName) {
+    const url = `https://api.football-data.org/v4/teams?name=${teamName}`;
     const options = {
         method: 'GET',
         headers: {
@@ -27,30 +27,14 @@ async function getTeams() {
     try {
         const response = await fetch(url, options);
         const data = await response.json();
-        return data.teams.map(team => team.name);
-    } catch (error) {
-        console.error('Ошибка при загрузке команд:', error);
-        return [];
-    }
-}
-
-// Функция для получения ID команды по названию
-async function getTeamId(teamName) {
-    const url = 'https://api.football-data.org/v4/competitions/PL/teams'; // Пример для Premier League
-    const options = {
-        method: 'GET',
-        headers: {
-            'X-Auth-Token': API_KEY
+        if (data.teams && data.teams.length > 0) {
+            return data.teams[0]; // Возвращаем первую найденную команду
+        } else {
+            console.error('Команда не найдена:', teamName);
+            return null;
         }
-    };
-
-    try {
-        const response = await fetch(url, options);
-        const data = await response.json();
-        const team = data.teams.find(t => t.name === teamName);
-        return team ? team.id : null;
     } catch (error) {
-        console.error('Ошибка при загрузке ID команды:', error);
+        console.error('Ошибка при поиске команды:', error);
         return null;
     }
 }
@@ -141,8 +125,17 @@ async function predictMatchWithNeuralNetwork(team1, team2) {
         return predictionsCache[cacheKey]; // Возвращаем сохранённый прогноз
     }
 
-    const team1Id = await getTeamId(team1);
-    const team2Id = await getTeamId(team2);
+    // Поиск команд по названию
+    const team1Data = await searchTeamByName(team1);
+    const team2Data = await searchTeamByName(team2);
+
+    if (!team1Data || !team2Data) {
+        alert('Одна из команд не найдена. Пожалуйста, проверьте названия.');
+        return;
+    }
+
+    const team1Id = team1Data.id;
+    const team2Id = team2Data.id;
 
     const team1Matches = await getLast10Matches(team1Id);
     const team2Matches = await getLast10Matches(team2Id);
@@ -251,6 +244,7 @@ function copyPrediction() {
 // Инициализация автодополнения и загрузка сохранённых прогнозов
 document.addEventListener('DOMContentLoaded', async () => {
     const teams = await getTeams();
+    console.log("Список команд:", teams); // Проверьте, что список загружен
     new Awesomplete(document.getElementById('team1'), { list: teams, minChars: 1 });
     new Awesomplete(document.getElementById('team2'), { list: teams, minChars: 1 });
 
@@ -263,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Обработка формы
 document.getElementById('prediction-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+    event.preventDefault(); // Предотвращаем перезагрузку страницы
 
     const team1 = document.getElementById('team1').value.trim();
     const team2 = document.getElementById('team2').value.trim();
