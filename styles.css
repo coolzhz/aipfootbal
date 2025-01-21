@@ -1,8 +1,3 @@
-/* Переменные */
-:root {
-    --bgWidth: 10000px;
-}
-
 /* Основные стили */
 body {
     margin: 0;
@@ -28,12 +23,14 @@ body {
     }
 }
 
-/* Контейнер */
+/* Контейнер с эффектом стекла и размытием */
 .container {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1); /* Полупрозрачный белый фон */
+    backdrop-filter: blur(10px); /* Размытие фона */
+    border-radius: 12px; /* Закруглённые углы */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Лёгкая граница */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Тень для объёма */
     padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 500px;
     text-align: center;
@@ -91,9 +88,10 @@ button:hover {
 .result-container {
     margin-top: 1.5rem;
     padding: 1rem;
-    background: #f9f9f9;
+    background: rgba(255, 255, 255, 0.2); /* Полупрозрачный фон */
+    backdrop-filter: blur(5px); /* Лёгкое размытие */
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Лёгкая граница */
     color: #333;
     text-align: left;
 }
