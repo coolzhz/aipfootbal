@@ -1,4 +1,4 @@
-const API_KEY = 'c04371800faa45e196eff88239ce1d42'; // Ваш API-ключ
+const API_KEY = 'c04371800faa45e196eff88239ce1d42'; // Ваш ключ от football-data.org
 const API_HOST = 'api.football-data.org';
 
 // Кэш для хранения прогнозов
@@ -128,6 +128,12 @@ async function predictWithNeuralNetwork(team1Stats, team2Stats) {
     return prediction.dataSync()[0]; // Вероятность победы первой команды
 }
 
+// Функция для расчёта уверенности нейронной сети
+function calculateConfidence(prediction) {
+    const confidence = Math.abs(2 * (prediction - 0.5)) * 100;
+    return confidence.toFixed(2); // Уверенность в процентах
+}
+
 // Функция для прогнозирования матча с использованием нейронной сети
 async function predictMatchWithNeuralNetwork(team1, team2) {
     const cacheKey = `${team1}-${team2}`;
@@ -146,6 +152,9 @@ async function predictMatchWithNeuralNetwork(team1, team2) {
 
     // Прогнозируем результат с использованием нейронной сети
     const prediction = await predictWithNeuralNetwork(team1Stats, team2Stats);
+
+    // Рассчитываем уверенность нейронной сети
+    const confidence = calculateConfidence(prediction);
 
     // Генерация результата на основе прогноза
     const team1Goals = Math.floor(prediction * 3); // Пример: вероятность победы влияет на голы
@@ -167,6 +176,7 @@ async function predictMatchWithNeuralNetwork(team1, team2) {
         team2Total: team2Total,
         exactScore: exactScore,
         comment: comment,
+        confidence: confidence, // Уверенность нейронной сети
         team1Stats,
         team2Stats
     };
@@ -211,6 +221,7 @@ function displayPredictionWithStats(result) {
         Индивидуальный тотал ${result.team2}: ${result.team2Total}
         Точный счёт: ${result.exactScore}
         Комментарий: ${result.comment}
+        Уверенность нейронной сети: ${result.confidence}%
     `;
 
     resultContainer.innerHTML = `
@@ -221,6 +232,7 @@ function displayPredictionWithStats(result) {
         <p><i class="fas fa-running icon"></i> Индивидуальный тотал ${result.team2}: ${result.team2Total}</p>
         <p><i class="fas fa-stopwatch icon"></i> Точный счёт: ${result.exactScore}</p>
         <p><i class="fas fa-comment icon"></i> Комментарий: ${result.comment}</p>
+        <p><i class="fas fa-brain icon"></i> Уверенность нейронной сети: ${result.confidence}%</p>
         <button id="copy-button" onclick="copyPrediction()"><i class="fas fa-copy"></i> Скопировать прогноз</button>
     `;
 
