@@ -1,7 +1,3 @@
-import * as tf from '@tensorflow/tfjs';
-
-console.log("TensorFlow.js загружен:", tf); // Проверка загрузки TensorFlow.js
-
 const API_KEY = 'c04371800faa45e196eff88239ce1d42'; // Ваш ключ от football-data.org
 const API_HOST = 'api.football-data.org';
 
@@ -13,16 +9,50 @@ let model;
 async function loadModel() {
     try {
         model = await tf.loadLayersModel('path/to/football_model.json');
-        console.log("Модель загружена:", model); // Проверка загрузки модели
+        console.log("Модель загружена:", model);
     } catch (error) {
         console.error("Ошибка при загрузке модели:", error);
+        alert("Не удалось загрузить модель. Пожалуйста, проверьте подключение к интернету и попробуйте снова.");
     }
 }
 loadModel();
 
+// Функция для проверки подключения к API
+async function checkAPI() {
+    const url = `https://${API_HOST}/v4/competitions/PL`; // Пример запроса к API (Premier League)
+    const options = {
+        method: 'GET',
+        headers: {
+            'X-Auth-Token': API_KEY
+        }
+    };
+
+    const apiCheckResult = document.getElementById('api-check-result');
+    apiCheckResult.textContent = 'Проверка подключения к API...';
+    apiCheckResult.className = 'api-check-result';
+
+    try {
+        const response = await fetch(url, options);
+        if (response.ok) {
+            const data = await response.json();
+            apiCheckResult.textContent = 'API работает корректно!';
+            apiCheckResult.className = 'api-check-result success';
+        } else {
+            apiCheckResult.textContent = `Ошибка: ${response.status} - ${response.statusText}`;
+            apiCheckResult.className = 'api-check-result error';
+        }
+    } catch (error) {
+        apiCheckResult.textContent = `Ошибка при подключении к API: ${error.message}`;
+        apiCheckResult.className = 'api-check-result error';
+    }
+}
+
+// Обработчик для кнопки проверки API
+document.getElementById('check-api-button').addEventListener('click', checkAPI);
+
 // Функция для поиска команды по названию
 async function searchTeamByName(teamName) {
-    const url = `https://api.football-data.org/v4/teams?name=${teamName}`;
+    const url = `https://${API_HOST}/v4/teams?name=${teamName}`;
     const options = {
         method: 'GET',
         headers: {
@@ -47,7 +77,7 @@ async function searchTeamByName(teamName) {
 
 // Функция для получения последних 10 матчей команды
 async function getLast10Matches(teamId) {
-    const url = `https://api.football-data.org/v4/teams/${teamId}/matches?status=FINISHED&limit=10`;
+    const url = `https://${API_HOST}/v4/teams/${teamId}/matches?status=FINISHED&limit=10`;
     const options = {
         method: 'GET',
         headers: {
