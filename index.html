@@ -5,17 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Прогноз матча</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <h1>Прогноз матча</h1>
-        <!-- Кнопка для проверки API -->
-        <button id="check-api-button"><i class="fas fa-plug icon"></i> Проверить подключение к API</button>
-        <div id="api-check-result" class="api-check-result"></div>
 
+        <!-- Форма для ввода команд -->
         <form id="prediction-form">
             <div class="input-group">
                 <label for="team1"><i class="fas fa-users icon"></i> Команда 1:</label>
@@ -27,14 +24,123 @@
             </div>
             <button type="submit"><i class="fas fa-futbol icon"></i> Получить прогноз</button>
         </form>
+
+        <!-- Результат парсинга и прогноза -->
         <div id="result" class="result-container"></div>
     </div>
 
-    <!-- Подключение TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <!-- Подключение Awesomplete -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
     <!-- Подключение основного скрипта -->
-    <script type="module" src="script.js"></script>
+    <script>
+        // Обработчик формы для прогноза
+        document.getElementById('prediction-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const team1 = document.getElementById('team1').value.trim();
+            const team2 = document.getElementById('team2').value.trim();
+
+            if (!team1 || !team2) {
+                alert('Пожалуйста, заполните все поля.');
+                return;
+            }
+
+            const resultContainer = document.getElementById('result');
+            resultContainer.innerHTML = '<p>Идёт парсинг данных... <i class="fas fa-spinner fa-spin"></i></p>';
+
+            try {
+                // Парсинг данных для обеих команд
+                const team1Matches = await parseLast10Matches(team1);
+                const team2Matches = await parseLast10Matches(team2);
+
+                // Анализ статистики
+                const team1Stats = analyzeTeamStats(team1Matches, team1);
+                const team2Stats = analyzeTeamStats(team2Matches, team2);
+
+                // Прогноз матча
+                const prediction = predictMatch(team1Stats, team2Stats);
+
+                // Отображение результата
+                resultContainer.innerHTML = `
+                    <h3>Прогноз матча:</h3>
+                    <p><i class="fas fa-users icon"></i> ${team1} vs ${team2}</p>
+                    <p><i class="fas fa-trophy icon"></i> Победитель: ${prediction.winner}</p>
+                    <p><i class="fas fa-chart-line icon"></i> Вероятность победы ${team1}: ${prediction.team1WinProbability}%</p>
+                    <p><i class="fas fa-chart-line icon"></i> Вероятность победы ${team2}: ${prediction.team2WinProbability}%</p>
+                    <p><i class="fas fa-comment icon"></i> Комментарий: ${prediction.comment}</p>
+                `;
+            } catch (error) {
+                resultContainer.innerHTML = `<p style="color: red;">Ошибка: ${error.message}</p>`;
+            }
+        });
+
+        // Функция для парсинга последних 10 матчей команды
+        async function parseLast10Matches(teamName) {
+            const response = await fetch(`/parse-matches?teamName=${encodeURIComponent(teamName)}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Ошибка при парсинге данных');
+            }
+
+            return data.matches;
+        }
+
+        // Функция для анализа статистики команды
+        function analyzeTeamStats(matches, teamName) {
+            let wins = 0;
+            let draws = 0;
+            let losses = 0;
+            let goalsScored = 0;
+            let goalsConceded = 0;
+
+            matches.forEach(match => {
+                const isHomeTeam = match.team1 === teamName;
+                const teamGoals = isHomeTeam ? match.score.split('-')[0] : match.score.split('-')[1];
+                const opponentGoals = isHomeTeam ? match.score.split('-')[1] : match.score.split('-')[0];
+
+                goalsScored += parseInt(teamGoals, 10);
+                goalsConceded += parseInt(opponentGoals, 10);
+
+                if (teamGoals > opponentGoals) {
+                    wins++;
+                } else if (teamGoals === opponentGoals) {
+                    draws++;
+                } else {
+                    losses++;
+                }
+            });
+
+            return {
+                wins,
+                draws,
+                losses,
+                goalsScored,
+                goalsConceded,
+                avgGoalsScored: (goalsScored / matches.length).toFixed(2),
+                avgGoalsConceded: (goalsConceded / matches.length).toFixed(2),
+                winRate: ((wins / matches.length) * 100).toFixed(2),
+            };
+        }
+
+        // Функция для прогнозирования матча
+        function predictMatch(team1Stats, team2Stats) {
+            const team1WinProbability = (parseFloat(team1Stats.winRate) * 0.7 + parseFloat(team2Stats.winRate) * 0.3).toFixed(2);
+            const team2WinProbability = (100 - team1WinProbability).toFixed(2);
+
+            const winner = team1WinProbability > team2WinProbability ? team1Stats.teamName : team2Stats.teamName;
+
+            const comments = [
+                `Ожидается напряжённый матч! ${team1Stats.teamName} и ${team2Stats.teamName} в хорошей форме.`,
+                `Судя по статистике, ${winner} имеет больше шансов на победу.`,
+                `Матч обещает быть зрелищным с большим количеством голов.`,
+            ];
+
+            return {
+                winner,
+                team1WinProbability,
+                team2WinProbability,
+                comment: comments[Math.floor(Math.random() * comments.length)],
+            };
+        }
+    </script>
 </body>
 </html>
