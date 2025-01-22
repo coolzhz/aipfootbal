@@ -1,16 +1,22 @@
+import * as tf from '@tensorflow/tfjs';
+
+console.log("TensorFlow.js загружен:", tf); // Проверка загрузки TensorFlow.js
+
 const API_KEY = 'c04371800faa45e196eff88239ce1d42'; // Ваш ключ от football-data.org
 const API_HOST = 'api.football-data.org';
 
 // Кэш для хранения прогнозов
 let predictionsCache = {};
 
-// Подключение TensorFlow.js
-import * as tf from '@tensorflow/tfjs';
-
 // Загрузка модели нейронной сети
 let model;
 async function loadModel() {
-    model = await tf.loadLayersModel('path/to/football_model.json'); // Модель в формате TensorFlow.js
+    try {
+        model = await tf.loadLayersModel('path/to/football_model.json');
+        console.log("Модель загружена:", model); // Проверка загрузки модели
+    } catch (error) {
+        console.error("Ошибка при загрузке модели:", error);
+    }
 }
 loadModel();
 
